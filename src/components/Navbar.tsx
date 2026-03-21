@@ -18,6 +18,9 @@ export default function Navbar() {
             <Link href="/search" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
               Search
             </Link>
+            <Link href="/watchlist" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
+              Watchlist
+            </Link>
           </div>
         </div>
         
