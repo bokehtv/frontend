@@ -45,3 +45,40 @@ export const watchlistApi = {
     method: "DELETE",
   }),
 };
+
+export const authApi = {
+  login: async (credentials: any) => {
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(credentials),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || "Login failed");
+    if (data.data?.accessToken) {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("accessToken", data.data.accessToken);
+      }
+    }
+    return data;
+  },
+  register: async (credentials: any) => {
+    const res = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(credentials),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || "Registration failed");
+    return data;
+  },
+  logout: () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("accessToken");
+    }
+  },
+};
+
+export const usersApi = {
+  getMe: () => fetchWithAuth("/users/me"),
+};
