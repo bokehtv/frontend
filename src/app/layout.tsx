@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-
+import Providers from "./providers";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -31,10 +31,12 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col relative overflow-x-hidden">
         {/* Subtle Background Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-purple-600/20 blur-[150px] pointer-events-none rounded-full" />
-        <Navbar />
-        <main className="flex-1 mt-16 z-10">
-          {children}
-        </main>
+        <Providers>
+          <Navbar />
+          <main className="flex-1 mt-16 z-10">
+            {children}
+          </main>
+        </Providers>
       </body>
     </html>
   );

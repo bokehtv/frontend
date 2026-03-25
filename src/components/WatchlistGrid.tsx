@@ -1,58 +1,54 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { watchlistApi } from "@/lib/api";
 
 type WatchlistStatus = "WANT" | "WATCHING" | "DONE";
 
 export default function WatchlistGrid() {
   const [filter, setFilter] = useState<WatchlistStatus | "ALL">("ALL");
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const response = await watchlistApi.getWatchlist();
-        setItems(response.data || []);
-      } catch (err: any) {
-        setError(err.message || "Please log in to view your watchlist.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["watchlist"],
+    queryFn: async () => {
+      const response = await watchlistApi.getWatchlist();
+      return response.data || [];
+    },
+  });
 
-  const handleUpdateStatus = async (id: string, newStatus: WatchlistStatus) => {
-    try {
-      await watchlistApi.updateStatus(id, newStatus);
-      setItems((prev) => prev.map(item => item.id === id ? { ...item, status: newStatus } : item));
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
+  const updateMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: WatchlistStatus }) =>
+      watchlistApi.updateStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+    },
+    onError: (err: any) => {
+      alert(err.message || "Failed to update status");
+    },
+  });
 
-  const handleRemove = async (id: string) => {
-    try {
-      await watchlistApi.removeFromWatchlist(id);
-      setItems((prev) => prev.filter(item => item.id !== id));
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => watchlistApi.removeFromWatchlist(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+    },
+    onError: (err: any) => {
+      alert(err.message || "Failed to remove item");
+    },
+  });
 
-  const filteredItems = filter === "ALL" ? items : items.filter((item) => item.status === filter);
+  const items = data || [];
+  const filteredItems = filter === "ALL" ? items : items.filter((item: any) => item.status === filter);
 
-  if (loading) return <div className="text-center py-20 animate-pulse text-gray-500">Loading your collection...</div>;
+  if (isLoading) return <div className="text-center py-20 animate-pulse text-gray-500">Loading your collection...</div>;
 
   if (error) {
     return (
       <div className="glass-card p-8 rounded-2xl text-center border border-red-500/30">
         <h2 className="text-xl text-red-400 font-bold mb-2">Access Denied</h2>
-        <p className="text-gray-400">{error}</p>
+        <p className="text-gray-400">{(error as Error).message || "Please log in to view your watchlist."}</p>
       </div>
     );
   }
@@ -78,7 +74,7 @@ export default function WatchlistGrid() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {filteredItems.map((item) => (
+          {filteredItems.map((item: any) => (
             <div key={item.id} className="group relative aspect-[2/3] rounded-xl overflow-hidden glass transition-all hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(0,0,0,0.8)]">
               {item.content.poster_url && (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -90,14 +86,19 @@ export default function WatchlistGrid() {
                 <div className="flex flex-col gap-2 mt-4 space-y-2">
                   <select 
                     value={item.status} 
-                    onChange={(e) => handleUpdateStatus(item.id, e.target.value as WatchlistStatus)}
-                    className="w-full bg-white/10 text-xs px-2 py-2 rounded-lg text-white border border-white/20 outline-none backdrop-blur-xl"
+                    onChange={(e) => updateMutation.mutate({ id: item.id, status: e.target.value as WatchlistStatus })}
+                    disabled={updateMutation.isPending}
+                    className="w-full bg-white/10 text-xs px-2 py-2 rounded-lg text-white border border-white/20 outline-none backdrop-blur-xl disabled:opacity-50 cursor-pointer"
                   >
                     <option value="WANT" className="bg-black">Want to Watch</option>
                     <option value="WATCHING" className="bg-black">Watching</option>
                     <option value="DONE" className="bg-black">Done</option>
                   </select>
-                  <button onClick={() => handleRemove(item.id)} className="w-full py-2 text-xs text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors">
+                  <button 
+                    onClick={() => removeMutation.mutate(item.id)} 
+                    disabled={removeMutation.isPending}
+                    className="w-full py-2 text-xs text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+                  >
                     Remove
                   </button>
                 </div>
