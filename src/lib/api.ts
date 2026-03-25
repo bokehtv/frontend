@@ -79,6 +79,10 @@ export const authApi = {
   },
 };
 
+export const contentApi = {
+  search: (query: string, page: number = 1) => fetchWithAuth(`/content/search?query=${encodeURIComponent(query)}&page=${page}`),
+};
+
 export const usersApi = {
   getMe: () => fetchWithAuth("/users/me"),
 };
