@@ -17,6 +17,7 @@ export default function SearchPage() {
       return response;
     },
     enabled: !!searchQuery,
+    retry: 1,
   });
 
   const handleSearchCommit = (e?: React.FormEvent) => {

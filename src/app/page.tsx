@@ -12,6 +12,7 @@ export default function Home() {
       return res.data || [];
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
+    retry: 1, 
   });
 
   const trendingItems = trendingResponse || [];

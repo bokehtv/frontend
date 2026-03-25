@@ -16,6 +16,7 @@ export default function WatchlistGrid() {
       const response = await watchlistApi.getWatchlist();
       return response.data || [];
     },
+    retry: 1,
   });
 
   const updateMutation = useMutation({
