@@ -10,6 +10,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         defaultOptions: {
           queries: {
             staleTime: 60 * 1000,
+            retry: false, // Stop automatic retries after a failure
+            refetchOnWindowFocus: false, // Stop automatic refetching when switching back to the tab
           },
         },
       })

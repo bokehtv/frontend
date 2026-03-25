@@ -11,10 +11,21 @@ export default function Navbar() {
   const queryClient = useQueryClient();
   const [hasToken, setHasToken] = useState(false);
 
-  // Use an effect to safely read from localStorage
+  // Sync the local token existence on mount and after render cycles 
+  // without subscribing to the cache synchronously during other renders
   useEffect(() => {
-    setHasToken(!!getAuthToken());
-  }, []);
+    const checkToken = () => {
+      const activeToken = !!getAuthToken();
+      if (activeToken !== hasToken) setHasToken(activeToken);
+    };
+
+    checkToken();
+    
+    // Check every few seconds or on specific events to keep it in sync 
+    // without using the noisy queryCache subscription
+    const interval = setInterval(checkToken, 2000);
+    return () => clearInterval(interval);
+  }, [hasToken]);
 
   const { data: userResponse, isSuccess } = useQuery({
     queryKey: ["user"],
@@ -22,20 +33,10 @@ export default function Navbar() {
       const res = await usersApi.getMe();
       return res.data;
     },
-    // Only attempt to fetch if we found a local token string
     enabled: hasToken,
     retry: false,
     staleTime: 5 * 60 * 1000,
   });
-
-  // Track manual invalidation if token gets injected after login
-  useEffect(() => {
-    const unsub = queryClient.getQueryCache().subscribe(() => {
-      const activeToken = !!getAuthToken();
-      if (activeToken !== hasToken) setHasToken(activeToken);
-    });
-    return () => unsub();
-  }, [hasToken, queryClient]);
 
   const handleLogout = () => {
     authApi.logout();
@@ -43,6 +44,7 @@ export default function Navbar() {
     queryClient.setQueryData(["user"], null);
     queryClient.invalidateQueries({ queryKey: ["user"] });
     router.push("/");
+    router.refresh();
   };
 
   const isLoggedIn = isSuccess && !!userResponse;

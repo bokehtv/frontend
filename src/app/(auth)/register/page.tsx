@@ -20,11 +20,25 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [validationError, setValidationError] = useState("");
 
+  const loginMutation = useMutation({
+    mutationFn: () => authApi.login({ email, password }),
+    onSuccess: (response) => {
+       // Save the token and redirect to home
+       localStorage.setItem("accessToken", response.data.accessToken);
+       router.push("/");
+       router.refresh(); // Trigger a refetch of layout components like Navbar
+    },
+    onError: () => {
+       // If auto-login fails for some reason, just fall back to manual login
+       router.push("/login?registered=true");
+    }
+  });
+
   const registerMutation = useMutation({
     mutationFn: () => authApi.register({ username, email, password }),
     onSuccess: () => {
-      // Successfully registered, send them to login
-      router.push("/login");
+      // Trigger the auto-login after successful registration
+      loginMutation.mutate();
     },
     onError: (err: Error) => {
       setValidationError(err.message);
@@ -103,10 +117,10 @@ export default function RegisterPage() {
 
           <button 
             type="submit"
-            disabled={registerMutation.isPending}
+            disabled={registerMutation.isPending || loginMutation.isPending}
             className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:opacity-90 transition-opacity shadow-[0_0_20px_rgba(168,85,247,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {registerMutation.isPending ? "Creating..." : "Create Account"}
+            {registerMutation.isPending ? "Creating..." : loginMutation.isPending ? "Redirecting..." : "Create Account"}
           </button>
         </form>
 
