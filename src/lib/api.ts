@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
 export function getAuthToken() {
   if (typeof window !== "undefined") {
@@ -81,6 +81,7 @@ export const authApi = {
 
 export const contentApi = {
   search: (query: string, page: number = 1) => fetchWithAuth(`/content/search?query=${encodeURIComponent(query)}&page=${page}`),
+  getTrending: () => fetchWithAuth("/content/trending"),
 };
 
 export const usersApi = {
