@@ -8,7 +8,7 @@ export function getAuthToken() {
 }
 
 export async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
-  const token = getAuthToken();
+  let token = getAuthToken();
   const headers = new Headers(options.headers);
   
   if (token) {
@@ -17,10 +17,40 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
   
   headers.set("Content-Type", "application/json");
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  // Include credentials (cookies) for refresh token access
+  const fetchOptions = {
     ...options,
     headers,
-  });
+    credentials: options.credentials || 'include',
+  };
+
+  let response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
+
+  // Auto Refresh Logic on 401
+  if (response.status === 401 && !endpoint.includes('/auth/refresh')) {
+    console.log("Access token expired, attempting refresh...");
+    const refreshData = await authApi.refresh();
+    
+    if (refreshData.success && refreshData.data?.accessToken) {
+      const newToken = refreshData.data.accessToken;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("accessToken", newToken);
+      }
+      
+      // Retry with new token
+      headers.set("Authorization", `Bearer ${newToken}`);
+      response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...fetchOptions,
+        headers,
+      });
+    } else {
+      // Refresh failed, logout
+      authApi.logout();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+    }
+  }
 
   const data = await response.json();
 
@@ -72,6 +102,17 @@ export const authApi = {
     if (!res.ok) throw new Error(data.error?.message || "Registration failed");
     return data;
   },
+  refresh: async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: "POST",
+        credentials: 'include', // Send the browser cookie
+      });
+      return await res.json();
+    } catch {
+      return { success: false };
+    }
+  },
   logout: () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("accessToken");
@@ -81,7 +122,7 @@ export const authApi = {
 
 export const contentApi = {
   search: (query: string, page: number = 1) => fetchWithAuth(`/content/search?query=${encodeURIComponent(query)}&page=${page}`),
-  getTrending: () => fetchWithAuth("/content/trending"),
+  getTrending: (page: number = 1) => fetchWithAuth(`/content/trending?page=${page}`),
 };
 
 export const usersApi = {
