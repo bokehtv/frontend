@@ -74,7 +74,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {trendingItems.slice(0, 5).map((item: any, i: number) => (
+            {trendingItems.slice(0, 5).map((item: { tmdb_id: string | number, type: string, title: string, poster_url?: string, release_date?: string }, i: number) => (
               <div 
                 key={item.tmdb_id} 
                 className="group relative aspect-[2/3] rounded-xl overflow-hidden glass border border-white/5 hover:border-white/20 transition-all cursor-pointer animate-fade-in-up"

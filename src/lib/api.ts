@@ -8,7 +8,7 @@ export function getAuthToken() {
 }
 
 export async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
-  let token = getAuthToken();
+  const token = getAuthToken();
   const headers = new Headers(options.headers);
   
   if (token) {
@@ -63,7 +63,7 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
 
 export const watchlistApi = {
   getWatchlist: () => fetchWithAuth("/watchlist"),
-  addToWatchlist: (data: any) => fetchWithAuth("/watchlist", {
+  addToWatchlist: (data: Record<string, unknown>) => fetchWithAuth("/watchlist", {
     method: "POST",
     body: JSON.stringify(data),
   }),
@@ -77,7 +77,7 @@ export const watchlistApi = {
 };
 
 export const authApi = {
-  login: async (credentials: any) => {
+  login: async (credentials: Record<string, unknown>) => {
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -92,7 +92,7 @@ export const authApi = {
     }
     return data;
   },
-  register: async (credentials: any) => {
+  register: async (credentials: Record<string, unknown>) => {
     const res = await fetch(`${API_BASE_URL}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
