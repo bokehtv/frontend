@@ -17,10 +17,40 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
   
   headers.set("Content-Type", "application/json");
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  // Include credentials (cookies) for refresh token access
+  const fetchOptions = {
     ...options,
     headers,
-  });
+    credentials: options.credentials || 'include',
+  };
+
+  let response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
+
+  // Auto Refresh Logic on 401
+  if (response.status === 401 && !endpoint.includes('/auth/refresh')) {
+    console.log("Access token expired, attempting refresh...");
+    const refreshData = await authApi.refresh();
+    
+    if (refreshData.success && refreshData.data?.accessToken) {
+      const newToken = refreshData.data.accessToken;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("accessToken", newToken);
+      }
+      
+      // Retry with new token
+      headers.set("Authorization", `Bearer ${newToken}`);
+      response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...fetchOptions,
+        headers,
+      });
+    } else {
+      // Refresh failed, logout
+      authApi.logout();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+    }
+  }
 
   const data = await response.json();
 
@@ -33,7 +63,7 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
 
 export const watchlistApi = {
   getWatchlist: () => fetchWithAuth("/watchlist"),
-  addToWatchlist: (data: any) => fetchWithAuth("/watchlist", {
+  addToWatchlist: (data: Record<string, unknown>) => fetchWithAuth("/watchlist", {
     method: "POST",
     body: JSON.stringify(data),
   }),
@@ -47,7 +77,7 @@ export const watchlistApi = {
 };
 
 export const authApi = {
-  login: async (credentials: any) => {
+  login: async (credentials: Record<string, unknown>) => {
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -62,7 +92,7 @@ export const authApi = {
     }
     return data;
   },
-  register: async (credentials: any) => {
+  register: async (credentials: Record<string, unknown>) => {
     const res = await fetch(`${API_BASE_URL}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -71,6 +101,17 @@ export const authApi = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || "Registration failed");
     return data;
+  },
+  refresh: async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: "POST",
+        credentials: 'include', // Send the browser cookie
+      });
+      return await res.json();
+    } catch {
+      return { success: false };
+    }
   },
   logout: () => {
     if (typeof window !== "undefined") {
@@ -81,7 +122,7 @@ export const authApi = {
 
 export const contentApi = {
   search: (query: string, page: number = 1) => fetchWithAuth(`/content/search?query=${encodeURIComponent(query)}&page=${page}`),
-  getTrending: () => fetchWithAuth("/content/trending"),
+  getTrending: (page: number = 1) => fetchWithAuth(`/content/trending?page=${page}`),
 };
 
 export const usersApi = {

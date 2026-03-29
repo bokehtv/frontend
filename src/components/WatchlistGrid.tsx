@@ -6,6 +6,15 @@ import { watchlistApi } from "@/lib/api";
 
 type WatchlistStatus = "WANT" | "WATCHING" | "DONE";
 
+interface WatchlistItem {
+  id: string;
+  status: string;
+  content: {
+    title: string;
+    poster_url?: string;
+  };
+}
+
 export default function WatchlistGrid() {
   const [filter, setFilter] = useState<WatchlistStatus | "ALL">("ALL");
   const queryClient = useQueryClient();
@@ -25,7 +34,7 @@ export default function WatchlistGrid() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       alert(err.message || "Failed to update status");
     },
   });
@@ -35,13 +44,13 @@ export default function WatchlistGrid() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       alert(err.message || "Failed to remove item");
     },
   });
 
   const items = data || [];
-  const filteredItems = filter === "ALL" ? items : items.filter((item: any) => item.status === filter);
+  const filteredItems = filter === "ALL" ? items : items.filter((item: WatchlistItem) => item.status === filter);
 
   if (isLoading) return <div className="text-center py-20 animate-pulse text-gray-500">Loading your collection...</div>;
 
@@ -61,7 +70,7 @@ export default function WatchlistGrid() {
         {["ALL", "WANT", "WATCHING", "DONE"].map((cat) => (
           <button
             key={cat}
-            onClick={() => setFilter(cat as any)}
+            onClick={() => setFilter(cat as WatchlistStatus | "ALL")}
             className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${filter === cat ? "bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.4)]" : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/5"}`}
           >
             {cat}
@@ -75,7 +84,7 @@ export default function WatchlistGrid() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {filteredItems.map((item: any) => (
+          {filteredItems.map((item: WatchlistItem) => (
             <div key={item.id} className="group relative aspect-[2/3] rounded-xl overflow-hidden glass transition-all hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(0,0,0,0.8)]">
               {item.content.poster_url && (
                 // eslint-disable-next-line @next/next/no-img-element
