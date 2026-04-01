@@ -7,6 +7,7 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   setupFilesAfterEnv: [],
   testEnvironment: 'jest-environment-jsdom',
+  testPathIgnorePatterns: ['<rootDir>/e2e/'],
 }
 
 module.exports = createJestConfig(customJestConfig)
