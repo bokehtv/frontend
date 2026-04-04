@@ -1,19 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
-import { contentApi } from "@/lib/api";
+import { contentApi, ApiResponse, ContentItem } from "@/lib/api";
+import { GridSkeleton } from "@/components/Skeleton";
 
 export default function SearchPage() {
   const [inputValue, setInputValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data: searchResponse, isLoading, isError, error } = useQuery<ApiResponse<ContentItem[]>>({
     queryKey: ["search", searchQuery],
     queryFn: async () => {
-      if (!searchQuery) return { data: [], meta: null };
-      const response = await contentApi.search(searchQuery);
-      return response;
+      if (!searchQuery) return { success: true, data: [] };
+      return await contentApi.search(searchQuery);
     },
     enabled: !!searchQuery,
     retry: 1,
@@ -24,7 +25,7 @@ export default function SearchPage() {
     setSearchQuery(inputValue);
   };
 
-  const results = data?.data || [];
+  const results = searchResponse?.data || [];
 
   return (
     <div className="w-full max-w-7xl mx-auto px-6 py-12 md:py-24">
@@ -52,11 +53,7 @@ export default function SearchPage() {
 
       {/* Grid Results */}
       {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-            <div key={i} className="aspect-[2/3] rounded-xl overflow-hidden bg-white/5 animate-pulse" />
-          ))}
-        </div>
+        <GridSkeleton count={10} />
       ) : isError ? (
         <div className="text-center py-20 text-red-400 glass-card">
           {(error as Error).message || "An error occurred while searching. Please try again."}
@@ -67,17 +64,18 @@ export default function SearchPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {results.map((item: { tmdb_id: string | number, type: string, title: string, poster_url?: string, release_date?: string }, i: number) => (
+          {results.map((item, i) => (
             <div 
               key={item.tmdb_id} 
               className="group relative aspect-[2/3] rounded-xl overflow-hidden glass hover:border-white/20 transition-all cursor-pointer animate-fade-in-up"
               style={{ animationDelay: `${i * 0.05}s` }}
             >
               {item.poster_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img 
+                <Image 
                   src={item.poster_url} 
                   alt={item.title} 
+                  fill
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
                   className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" 
                 />
               ) : (
@@ -97,12 +95,10 @@ export default function SearchPage() {
                    <p className="text-xs text-gray-400">{item.release_date.split('-')[0]}</p>
                 )}
                 
-                {/* Watchlist Quick Action (Placeholder for follow-up session) */}
                 <button 
                   className="mt-3 w-full py-2 bg-white/10 hover:bg-white text-white hover:text-black rounded-lg text-xs font-bold transition-all backdrop-blur-md"
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Add watchlist save logic here in next task
                   }}
                 >
                   + Add to Watchlist
@@ -115,3 +111,4 @@ export default function SearchPage() {
     </div>
   );
 }
+

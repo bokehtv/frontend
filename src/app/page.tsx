@@ -1,21 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
-import { contentApi } from "@/lib/api";
+import { contentApi, ApiResponse, ContentItem } from "@/lib/api";
+import { GridSkeleton } from "@/components/Skeleton";
 
 export default function Home() {
-  const { data: trendingResponse, isLoading } = useQuery({
+  const { data: trendingResponse, isLoading } = useQuery<ApiResponse<ContentItem[]>>({
     queryKey: ["trending"],
     queryFn: async () => {
-      const res = await contentApi.getTrending();
-      return res.data || [];
+      return await contentApi.getTrending();
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     retry: 1, 
   });
 
-  const trendingItems = trendingResponse || [];
+  const trendingItems = trendingResponse?.data || [];
 
   return (
     <div className="w-full">
@@ -67,25 +68,23 @@ export default function Home() {
         </div>
         
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="aspect-[2/3] rounded-xl overflow-hidden bg-white/5 animate-pulse" />
-            ))}
-          </div>
+          <GridSkeleton count={5} />
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {trendingItems.slice(0, 5).map((item: { tmdb_id: string | number, type: string, title: string, poster_url?: string, release_date?: string }, i: number) => (
+            {trendingItems.slice(0, 5).map((item, i) => (
               <div 
                 key={item.tmdb_id} 
                 className="group relative aspect-[2/3] rounded-xl overflow-hidden glass border border-white/5 hover:border-white/20 transition-all cursor-pointer animate-fade-in-up"
                 style={{ animationDelay: `${i * 0.1}s` }}
               >
                 {item.poster_url && (
-                   // eslint-disable-next-line @next/next/no-img-element
-                  <img 
+                  <Image 
                     src={item.poster_url} 
                     alt={item.title} 
+                    fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
                     className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" 
+                    priority={i < 5}
                   />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
@@ -106,3 +105,4 @@ export default function Home() {
     </div>
   );
 }
+

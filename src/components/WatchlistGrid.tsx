@@ -1,29 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { watchlistApi } from "@/lib/api";
+import { watchlistApi, ApiResponse, WatchlistItem } from "@/lib/api";
+import { GridSkeleton } from "./Skeleton";
 
 type WatchlistStatus = "WANT" | "WATCHING" | "DONE";
-
-interface WatchlistItem {
-  id: string;
-  status: string;
-  content: {
-    title: string;
-    poster_url?: string;
-  };
-}
 
 export default function WatchlistGrid() {
   const [filter, setFilter] = useState<WatchlistStatus | "ALL">("ALL");
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery({
+  const { data: watchlistResponse, isLoading, error } = useQuery<ApiResponse<WatchlistItem[]>>({
     queryKey: ["watchlist"],
     queryFn: async () => {
-      const response = await watchlistApi.getWatchlist();
-      return response.data || [];
+      return await watchlistApi.getWatchlist();
     },
     retry: 1,
   });
@@ -49,10 +41,10 @@ export default function WatchlistGrid() {
     },
   });
 
-  const items = data || [];
-  const filteredItems = filter === "ALL" ? items : items.filter((item: WatchlistItem) => item.status === filter);
+  const items = watchlistResponse?.data || [];
+  const filteredItems = filter === "ALL" ? items : items.filter((item) => item.status === filter);
 
-  if (isLoading) return <div className="text-center py-20 animate-pulse text-gray-500">Loading your collection...</div>;
+  if (isLoading) return <GridSkeleton count={10} />;
 
   if (error) {
     return (
@@ -84,11 +76,16 @@ export default function WatchlistGrid() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {filteredItems.map((item: WatchlistItem) => (
+          {filteredItems.map((item) => (
             <div key={item.id} className="group relative aspect-[2/3] rounded-xl overflow-hidden glass transition-all hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(0,0,0,0.8)]">
               {item.content.poster_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.content.poster_url} alt={item.content.title} className="absolute inset-0 w-full h-full object-cover" />
+                <Image 
+                  src={item.content.poster_url} 
+                  alt={item.content.title} 
+                  fill
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                  className="absolute inset-0 w-full h-full object-cover" 
+                />
               )}
               
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
@@ -120,3 +117,4 @@ export default function WatchlistGrid() {
     </div>
   );
 }
+
