@@ -1,5 +1,36 @@
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  meta?: {
+    page: number;
+    total: number;
+    totalPagesIndex?: number;
+    totalPages?: number;
+  };
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+
+export interface ContentItem {
+  tmdb_id: number;
+  type: "movie" | "tv";
+  title: string;
+  poster_url: string | null;
+  overview: string;
+  release_date: string;
+}
+
+export interface WatchlistItem {
+  id: string;
+  status: "WANT" | "WATCHING" | "DONE";
+  content: Pick<ContentItem, "title" | "poster_url">;
+  added_at: string;
+}
+
 export function getAuthToken() {
   if (typeof window !== "undefined") {
     return localStorage.getItem("accessToken");
