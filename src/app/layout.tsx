@@ -15,8 +15,42 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BokehTV",
-  description: "Your ultimate movie and TV tracking platform.",
+  title: {
+    default: "BokehTV | Your Ultimate Media Tracker",
+    template: "%s | BokehTV",
+  },
+  description: "BokehTV is the ultimate hub to discover, track, and log the movies and TV shows you love. Join the community and build your ultimate watchlist.",
+  keywords: ["movies", "tv shows", "tracking", "watchlist", "entertainment", "films", "series", "tmdb"],
+  authors: [{ name: "BokehTV Team" }],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_URL || "https://bokehtv.vercel.app"),
+  openGraph: {
+    title: "BokehTV",
+    description: "Track your frames, build your collection.",
+    url: "https://bokehtv.vercel.app",
+    siteName: "BokehTV",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "BokehTV Preview",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BokehTV",
+    description: "Track your frames, build your collection.",
+    images: ["/og-image.png"],
+  },
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({

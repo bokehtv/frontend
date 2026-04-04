@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import WatchlistGrid from "@/components/WatchlistGrid";
+
+export const metadata: Metadata = {
+  title: "My Watchlist",
+  description: "Track and organize your personal collection of movies and TV shows.",
+};
 
 export default function WatchlistPage() {
   return (

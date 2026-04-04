@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BokehTV — Frontend (Next.js 14)
 
-## Getting Started
+The BokehTV frontend is a high-performance, responsive web application built with **Next.js 14 (App Router)**. It provides a seamless media exploration and tracking experience with a focus on modern UX aesthetics and performance.
 
-First, run the development server:
+---
 
+## 🏗 Core Stack
+
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript (Strict Mode)
+- **Styling**: Tailwind CSS
+- **State Management**: TanStack Query (Infinite Scroll and Cache-aside)
+- **Image Optimization**: NextImage with TMDB remote patterns configured.
+- **SEO**: Dynamic metadata API (Title Templates, OpenGraph, Twitter Cards).
+- **Deployment**: Vercel
+
+---
+
+## 🚀 Development Setup
+
+### 1. Environment Configuration
+Copy the template and fill in your details:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env
 ```
+Ensure you have `NEXT_PUBLIC_API_URL` pointing to your backend (default: `http://localhost:5000/api/v1`).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install & Start
+```bash
+npm install
+npm run dev
+```
+The app will start at `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🎯 Architecture & Performance Highlights
 
-## Learn More
+### 1. UX Polish & Performance
+- **React Suspense Skeletons**: Dynamic loading states for movie grids and detail pages (no "layout-shifts").
+- **NextImage Optimization**: Integrated TMDB image domain with custom `sizes` and `priority` for LCP optimization.
+- **Server Component First**: Logic is kept in server components wherever possible to minimize hydration costs.
 
-To learn more about Next.js, take a look at the following resources:
+### 2. SEO & Social Presence
+- **Dynamic Meta Tags**: Automated title templates and OG/Twitter cards for all core routes.
+- **Robots & Sitemap**: Auto-generated indexing protocols via the Next.js `metadata` API.
+- **Analytic Integration**: Ready-to-use Vercel Analytics integration.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🏗 Deployment
+Automatic high-availability deployments to **Vercel Edge Network** for all PRs and merges to `main`.
+Features "Wait for CI" gates to ensure only passing code hits production.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🛡 License
+MIT
